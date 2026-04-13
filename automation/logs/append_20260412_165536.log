@@ -1,0 +1,6 @@
+2026-04-12 16:55:36,287 INFO Processing 1 CSV file(s)
+2026-04-12 16:55:36,293 INFO 00678768_20263912_0104.csv: 21 rows parsed
+2026-04-12 16:55:36,293 INFO Scanning existing workbook for dedup...
+2026-04-12 16:55:36,429 INFO Existing rows in workbook: 17618
+2026-04-12 16:55:36,429 INFO Dedupe: 21 CSV rows -> 0 new (21 already in workbook)
+2026-04-12 16:55:36,429 WARNING Nothing new to append after dedup. Exiting.

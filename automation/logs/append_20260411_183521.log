@@ -1,0 +1,24 @@
+2026-04-11 18:35:21,264 INFO Processing 1 CSV file(s)
+2026-04-11 18:35:21,297 INFO 00678768_20263006_0304 copy 2.csv: 1871 rows parsed
+2026-04-11 18:35:21,298 INFO Scanning existing workbook for dedup...
+2026-04-11 18:35:21,429 INFO Existing rows in workbook: 17618
+2026-04-11 18:35:21,431 INFO Dedupe: 1871 CSV rows -> 0 new (1871 already in workbook)
+2026-04-11 18:35:21,431 WARNING Nothing new to append after dedup. Exiting.
+2026-04-11 18:35:21,506 INFO Processing 1 CSV file(s)
+2026-04-11 18:35:21,546 INFO 00678768_20263006_0304 copy 3.csv: 1871 rows parsed
+2026-04-11 18:35:21,546 INFO Scanning existing workbook for dedup...
+2026-04-11 18:35:21,668 INFO Existing rows in workbook: 17618
+2026-04-11 18:35:21,670 INFO Dedupe: 1871 CSV rows -> 0 new (1871 already in workbook)
+2026-04-11 18:35:21,670 WARNING Nothing new to append after dedup. Exiting.
+2026-04-11 18:35:21,742 INFO Processing 1 CSV file(s)
+2026-04-11 18:35:21,753 INFO 00678768_20263006_0304 copy.csv: 1871 rows parsed
+2026-04-11 18:35:21,753 INFO Scanning existing workbook for dedup...
+2026-04-11 18:35:21,877 INFO Existing rows in workbook: 17618
+2026-04-11 18:35:21,879 INFO Dedupe: 1871 CSV rows -> 0 new (1871 already in workbook)
+2026-04-11 18:35:21,880 WARNING Nothing new to append after dedup. Exiting.
+2026-04-11 18:35:21,951 INFO Processing 1 CSV file(s)
+2026-04-11 18:35:21,962 INFO 00678768_20263006_0304.csv: 1871 rows parsed
+2026-04-11 18:35:21,962 INFO Scanning existing workbook for dedup...
+2026-04-11 18:35:22,086 INFO Existing rows in workbook: 17618
+2026-04-11 18:35:22,089 INFO Dedupe: 1871 CSV rows -> 0 new (1871 already in workbook)
+2026-04-11 18:35:22,089 WARNING Nothing new to append after dedup. Exiting.

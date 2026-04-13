@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="manifest" href="manifest.json">
-<title>QAR &rarr; GBP Transfer Comparator</title>
+<title>QAR Transfer Comparator</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -114,13 +114,14 @@
     padding: 1.5rem;
     margin-bottom: 1.5rem;
     display: grid;
-    grid-template-columns: 1fr 1fr auto;
+    grid-template-columns: 1.2fr 0.8fr 0.8fr auto;
     gap: 1rem;
     align-items: end;
   }
 
-  @media (max-width: 600px) {
-    .input-panel { grid-template-columns: 1fr; }
+  @media (max-width: 700px) {
+    .input-panel { grid-template-columns: 1fr 1fr; }
+    .input-panel > div:last-child { grid-column: 1 / -1; }
   }
 
   label {
@@ -153,6 +154,28 @@
   }
 
   input[type="number"] { font-size: 1.15rem; }
+
+  /* Currency selector */
+  .currency-select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1rem;
+    font-weight: 500;
+    outline: none;
+    transition: border-color 0.2s;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2364748b' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+  }
+  .currency-select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,212,170,0.1); }
 
   input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.5); }
 
@@ -514,16 +537,24 @@
     <div class="logo-line">
       <span class="currency-pill qar">&#x1F1F6;&#x1F1E6; QAR</span>
       <span class="arrow-icon">&rarr;</span>
-      <span class="currency-pill gbp">&#x1F1EC;&#x1F1E7; GBP</span>
+      <span class="currency-pill gbp" id="targetPill">&#x1F1EC;&#x1F1E7; GBP</span>
     </div>
     <h1>Transfer <em>Comparator</em></h1>
-    <p class="subtitle">Commercial Bank Qatar &rarr; Bank of Scotland &middot; Find the best route</p>
+    <p class="subtitle" id="subtitleText">Commercial Bank Qatar &rarr; Bank of Scotland &middot; Find the best route</p>
   </header>
 
   <div class="input-panel">
     <div>
       <label>Amount (QAR)</label>
       <input type="number" id="amount" value="10000" min="100" step="100" placeholder="e.g. 10000">
+    </div>
+    <div>
+      <label>Convert to</label>
+      <select class="currency-select" id="targetCurrency" onchange="onCurrencyChange()">
+        <option value="GBP" selected>&#x1F1EC;&#x1F1E7; GBP &ndash; British Pound</option>
+        <option value="USD">&#x1F1FA;&#x1F1F8; USD &ndash; US Dollar</option>
+        <option value="EUR">&#x1F1EA;&#x1F1FA; EUR &ndash; Euro</option>
+      </select>
     </div>
     <div>
       <label>Transfer Date</label>
@@ -552,7 +583,7 @@
     </div>
     <div class="sort-bar">
       <span class="sort-label">Sort by:</span>
-      <button class="sort-btn active" id="sort-gbp" onclick="sortBy('gbp')">Most GBP</button>
+      <button class="sort-btn active" id="sort-gbp" onclick="sortBy('gbp')">Most Received</button>
       <button class="sort-btn" id="sort-rate" onclick="sortBy('rate')">Best Rate</button>
       <button class="sort-btn" id="sort-fee" onclick="sortBy('fee')">Lowest Fee</button>
       <button class="sort-btn" id="sort-speed" onclick="sortBy('speed')">Fastest</button>
@@ -571,19 +602,29 @@
 </div>
 
 <script>
+/* ━━━ Currency Config ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+const CURRENCIES = {
+  GBP: { symbol: '\u00A3', flag: '\uD83C\uDDEC\uD83C\uDDE7', name: 'GBP', fallback: 0.2063, subtitle: 'Commercial Bank Qatar \u2192 Bank of Scotland' },
+  USD: { symbol: '$', flag: '\uD83C\uDDFA\uD83C\uDDF8', name: 'USD', fallback: 0.2747, subtitle: 'Commercial Bank Qatar \u2192 US Bank Account' },
+  EUR: { symbol: '\u20AC', flag: '\uD83C\uDDEA\uD83C\uDDFA', name: 'EUR', fallback: 0.2530, subtitle: 'Commercial Bank Qatar \u2192 European Bank Account' }
+};
+
 /* ━━━ State ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-let midMarketRate = null;   // GBP per QAR (e.g. ~0.2063)
+let allRates = {};          // { GBP: 0.2063, USD: 0.2747, EUR: 0.2530 }
+let midMarketRate = null;   // rate for selected currency (target per QAR)
+let targetCcy = 'GBP';
 let isWeekend = false;
 let currentSort = 'gbp';
 let lastResults = [];
 let rateSourceName = '';
 
+function ccy() { return CURRENCIES[targetCcy]; }
+function sym() { return ccy().symbol; }
+
 /* ━━━ Provider Definitions ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-// Fee models return { feeQAR, rateMarkup (decimal), note }
-// rateMarkup is the fraction deducted from mid-market rate
-// feeQAR is the flat/percentage fee expressed in QAR
 const QAR_PER_USD = 3.64;
 
+// flatFeeLocal: fee in the target currency (converted to QAR dynamically)
 const PROVIDERS = [
   {
     id: 'wise', name: 'Wise', icon: 'W', iconClass: 'icon-wise',
@@ -613,13 +654,14 @@ const PROVIDERS = [
     },
     speed: '< 1 hour', speedClass: 'instant', speedOrder: 1,
     url: 'https://revolut.com',
-    notes: 'Premium (£9.99/mo) or Metal plan. No weekend surcharge. Fee-free up to limits.'
+    notes: 'Premium/Metal plan. No weekend surcharge. Fee-free up to limits.'
   },
   {
     id: 'currencyfair', name: 'CurrencyFair', icon: 'CF', iconClass: 'icon-currfair',
     feeModel: (qar) => {
-      const flatFeeGBP = 2.50;
-      return { feeQAR: flatFeeGBP / 0.2063, rateMarkup: 0.0045, note: '~£2.50 fee + 0.45% spread' };
+      const flatFee = 2.50; // in target currency
+      const feeQAR = midMarketRate > 0 ? flatFee / midMarketRate : 0;
+      return { feeQAR, rateMarkup: 0.0045, note: `~${sym()}2.50 fee + 0.45% spread` };
     },
     speed: '1-3 days', speedClass: '', speedOrder: 3,
     url: 'https://currencyfair.com',
@@ -632,17 +674,16 @@ const PROVIDERS = [
     },
     speed: '1-2 days', speedClass: '', speedOrder: 2,
     url: 'https://ofx.com',
-    notes: 'No transfer fee. 24/5 phone support. Better rates on amounts over £5,000 — call to negotiate.'
+    notes: 'No transfer fee. 24/5 phone support. Better rates on large amounts \u2014 call to negotiate.'
   },
   {
     id: 'instarem', name: 'InstaReM (Nium)', icon: 'iR', iconClass: 'icon-instarem',
     feeModel: (qar) => {
-      const pctFee = 0.005;
-      return { feeQAR: qar * pctFee, rateMarkup: 0.005, note: '~0.5% fee + 0.5% markup' };
+      return { feeQAR: qar * 0.005, rateMarkup: 0.005, note: '~0.5% fee + 0.5% markup' };
     },
     speed: '1-2 days', speedClass: 'fast', speedOrder: 2,
     url: 'https://instarem.com',
-    notes: 'Part of Nium global payments network. Competitive rates for Asia-to-UK corridor.'
+    notes: 'Part of Nium global payments network. Competitive rates.'
   },
   {
     id: 'torfx', name: 'TorFX', icon: 'TF', iconClass: 'icon-torfx',
@@ -675,8 +716,9 @@ const PROVIDERS = [
   {
     id: 'remitly', name: 'Remitly', icon: 'Re', iconClass: 'icon-remitly',
     feeModel: (qar) => {
-      const flatFeeGBP = 2.99;
-      return { feeQAR: flatFeeGBP / 0.2063, rateMarkup: 0.008, note: '~£2.99 fee + 0.8% markup' };
+      const flatFee = 2.99;
+      const feeQAR = midMarketRate > 0 ? flatFee / midMarketRate : 0;
+      return { feeQAR, rateMarkup: 0.008, note: `~${sym()}2.99 fee + 0.8% markup` };
     },
     speed: '1-5 days', speedClass: '', speedOrder: 3,
     url: 'https://remitly.com',
@@ -685,8 +727,9 @@ const PROVIDERS = [
   {
     id: 'worldremit', name: 'WorldRemit', icon: 'WR', iconClass: 'icon-worldremit',
     feeModel: (qar) => {
-      const flatFeeGBP = 3.99;
-      return { feeQAR: flatFeeGBP / 0.2063, rateMarkup: 0.012, note: '~£3.99 fee + 1.2% markup' };
+      const flatFee = 3.99;
+      const feeQAR = midMarketRate > 0 ? flatFee / midMarketRate : 0;
+      return { feeQAR, rateMarkup: 0.012, note: `~${sym()}3.99 fee + 1.2% markup` };
     },
     speed: 'Minutes-1 day', speedClass: 'fast', speedOrder: 1,
     url: 'https://worldremit.com',
@@ -695,8 +738,9 @@ const PROVIDERS = [
   {
     id: 'westernunion', name: 'Western Union', icon: 'WU', iconClass: 'icon-wu',
     feeModel: (qar) => {
-      const flatFeeGBP = 5;
-      return { feeQAR: flatFeeGBP / 0.2063, rateMarkup: 0.012, note: '~£5 fee + 1.2% markup' };
+      const flatFee = 5;
+      const feeQAR = midMarketRate > 0 ? flatFee / midMarketRate : 0;
+      return { feeQAR, rateMarkup: 0.012, note: `~${sym()}5 fee + 1.2% markup` };
     },
     speed: 'Minutes', speedClass: 'instant', speedOrder: 1,
     url: 'https://westernunion.com',
@@ -705,8 +749,9 @@ const PROVIDERS = [
   {
     id: 'moneygram', name: 'MoneyGram', icon: 'MG', iconClass: 'icon-moneygram',
     feeModel: (qar) => {
-      const flatFeeGBP = 4.99;
-      return { feeQAR: flatFeeGBP / 0.2063, rateMarkup: 0.015, note: '~£4.99 fee + 1.5% spread' };
+      const flatFee = 4.99;
+      const feeQAR = midMarketRate > 0 ? flatFee / midMarketRate : 0;
+      return { feeQAR, rateMarkup: 0.015, note: `~${sym()}4.99 fee + 1.5% spread` };
     },
     speed: 'Minutes-2 days', speedClass: 'fast', speedOrder: 2,
     url: 'https://moneygram.com',
@@ -715,8 +760,7 @@ const PROVIDERS = [
   {
     id: 'skrill', name: 'Skrill', icon: 'Sk', iconClass: 'icon-skrill',
     feeModel: (qar) => {
-      const pctFee = 0.0145;
-      return { feeQAR: qar * pctFee, rateMarkup: 0.025, note: '1.45% fee + 2.5% spread' };
+      return { feeQAR: qar * 0.0145, rateMarkup: 0.025, note: '1.45% fee + 2.5% spread' };
     },
     speed: '1-3 days', speedClass: '', speedOrder: 3,
     url: 'https://skrill.com',
@@ -730,17 +774,16 @@ const PROVIDERS = [
     },
     speed: '1-3 days', speedClass: '', speedOrder: 3,
     url: 'https://xoom.com',
-    notes: 'Avoid if possible — high markup on top of fees.'
+    notes: 'Avoid if possible \u2014 high markup on top of fees.'
   },
   {
     id: 'bank', name: 'CBQ Direct SWIFT Transfer', icon: '\uD83C\uDFE6', iconClass: 'icon-bank',
     feeModel: (qar) => {
-      const flatFeeQAR = 55; // ~QAR 55 (approx £11-12) SWIFT fee
-      return { feeQAR: flatFeeQAR, rateMarkup: 0.035, note: '~QAR 55 SWIFT fee + 3.5% spread' };
+      return { feeQAR: 55, rateMarkup: 0.035, note: '~QAR 55 SWIFT fee + 3.5% spread' };
     },
     speed: '3-5 days', speedClass: '', speedOrder: 4,
     url: null,
-    notes: 'Current method. Commercial Bank of Qatar SWIFT wire to Bank of Scotland.',
+    notes: 'Current method. Commercial Bank of Qatar international SWIFT wire.',
     isBank: true
   }
 ];
@@ -752,38 +795,32 @@ const PROVIDERS = [
   const mm = String(today.getMonth()+1).padStart(2,'0');
   const dd = String(today.getDate()).padStart(2,'0');
   document.getElementById('transferDate').value = `${yyyy}-${mm}-${dd}`;
-  fetchLiveRate();
+  fetchAllRates();
 })();
 
-/* ━━━ Fetch Mid-Market Rate ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-async function fetchLiveRate() {
+/* ━━━ Fetch Rates for All Currencies ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+async function fetchAllRates() {
   const dot = document.getElementById('rateDot');
   const display = document.getElementById('rateDisplay');
   const source = document.getElementById('rateSource');
   dot.className = 'rate-dot loading';
-  display.textContent = 'Fetching live rate\u2026';
+  display.textContent = 'Fetching live rates\u2026';
 
-  const FALLBACK_RATE = 0.2063;
   const apis = [
     {
       url: 'https://open.er-api.com/v6/latest/QAR',
-      parse: d => d.rates && d.rates.GBP ? d.rates.GBP : null,
+      parse: d => d.rates ? { GBP: d.rates.GBP, USD: d.rates.USD, EUR: d.rates.EUR } : null,
       name: 'open.er-api.com'
     },
     {
       url: 'https://api.exchangerate-api.com/v4/latest/QAR',
-      parse: d => d.rates && d.rates.GBP ? d.rates.GBP : null,
+      parse: d => d.rates ? { GBP: d.rates.GBP, USD: d.rates.USD, EUR: d.rates.EUR } : null,
       name: 'exchangerate-api.com'
     },
     {
       url: 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/qar.json',
-      parse: d => d.qar && d.qar.gbp ? d.qar.gbp : null,
+      parse: d => d.qar ? { GBP: d.qar.gbp, USD: d.qar.usd, EUR: d.qar.eur } : null,
       name: 'fawazahmed0/currency-api'
-    },
-    {
-      url: 'https://api.frankfurter.app/latest?from=QAR&to=GBP',
-      parse: d => d.rates && d.rates.GBP ? d.rates.GBP : null,
-      name: 'frankfurter.app'
     }
   ];
 
@@ -792,50 +829,74 @@ async function fetchLiveRate() {
       const resp = await fetch(api.url, { signal: AbortSignal.timeout(6000) });
       if (!resp.ok) continue;
       const data = await resp.json();
-      const rate = api.parse(data);
-      if (rate && rate > 0.1 && rate < 0.4) {
-        midMarketRate = rate;
+      const rates = api.parse(data);
+      if (rates && rates.GBP && rates.USD && rates.EUR) {
+        allRates = rates;
         rateSourceName = api.name;
+        midMarketRate = allRates[targetCcy];
         dot.className = 'rate-dot';
-        display.textContent = `1 QAR = \u00A3${midMarketRate.toFixed(6)} GBP`;
-        source.textContent = `Source: ${api.name}`;
+        updateRateDisplay();
         return;
       }
     } catch(e) { /* try next */ }
   }
 
-  // All failed — use fallback
-  midMarketRate = FALLBACK_RATE;
+  // All failed — use fallbacks
+  allRates = { GBP: CURRENCIES.GBP.fallback, USD: CURRENCIES.USD.fallback, EUR: CURRENCIES.EUR.fallback };
+  midMarketRate = allRates[targetCcy];
   rateSourceName = 'cached estimate';
   dot.className = 'rate-dot';
   dot.style.background = 'var(--gold)';
   dot.style.boxShadow = '0 0 6px var(--gold)';
-  display.textContent = `1 QAR = \u00A3${midMarketRate.toFixed(6)} GBP (cached)`;
-  source.textContent = '\u26A0 Live fetch failed \u2014 using recent cached rate. Verify before sending.';
+  updateRateDisplay();
+  document.getElementById('rateSource').textContent = '\u26A0 Live fetch failed \u2014 using cached rates.';
+}
+
+function updateRateDisplay() {
+  const display = document.getElementById('rateDisplay');
+  const source = document.getElementById('rateSource');
+  midMarketRate = allRates[targetCcy];
+  display.textContent = `1 QAR = ${sym()}${midMarketRate.toFixed(6)} ${targetCcy}`;
+  if (rateSourceName && rateSourceName !== 'cached estimate') {
+    source.textContent = `Source: ${rateSourceName}`;
+  }
+  // Update header
+  const pill = document.getElementById('targetPill');
+  pill.textContent = `${ccy().flag} ${targetCcy}`;
+  document.getElementById('subtitleText').textContent = ccy().subtitle + ' \u00B7 Find the best route';
+}
+
+function onCurrencyChange() {
+  targetCcy = document.getElementById('targetCurrency').value;
+  if (allRates[targetCcy]) {
+    midMarketRate = allRates[targetCcy];
+    updateRateDisplay();
+    // Re-run comparison if results are showing
+    if (lastResults.length > 0) runComparison();
+  }
 }
 
 /* ━━━ Calculate ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 function calcResult(provider, qarAmount, midRate) {
   const { feeQAR, rateMarkup, note } = provider.feeModel(qarAmount);
   const effectiveRate = midRate * (1 - rateMarkup);
-  const gbpReceived = (qarAmount - feeQAR) * effectiveRate;
-  const totalCostPct = ((1 - gbpReceived / (qarAmount * midRate)) * 100);
-  return { gbpReceived, effectiveRate, feeQAR, rateMarkup, note, totalCostPct };
+  const received = (qarAmount - feeQAR) * effectiveRate;
+  const totalCostPct = ((1 - received / (qarAmount * midRate)) * 100);
+  return { received, effectiveRate, feeQAR, rateMarkup, note, totalCostPct };
 }
 
 /* ━━━ Sort ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 function sortResults(results, key) {
   const sorted = [...results];
   sorted.sort((a, b) => {
-    // Bank always last
     if (a.isBank && !b.isBank) return 1;
     if (!a.isBank && b.isBank) return -1;
     switch (key) {
-      case 'gbp':   return b.result.gbpReceived - a.result.gbpReceived;
+      case 'gbp':   return b.result.received - a.result.received;
       case 'rate':  return b.result.effectiveRate - a.result.effectiveRate;
       case 'fee':   return a.result.feeQAR - b.result.feeQAR;
       case 'speed': return (a.speedOrder||3) - (b.speedOrder||3);
-      default:      return b.result.gbpReceived - a.result.gbpReceived;
+      default:      return b.result.received - a.result.received;
     }
   });
   return sorted;
@@ -852,9 +913,10 @@ function sortBy(key) {
 
 /* ━━━ Render ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 function renderCards(results) {
+  const s = sym();
   const sorted = sortResults(results, currentSort);
-  const bestGBP = sorted.filter(r => !r.isBank)[0]?.result.gbpReceived || 0;
-  const bankGBP = sorted.find(r => r.isBank)?.result.gbpReceived || 0;
+  const bestAmt = sorted.filter(r => !r.isBank)[0]?.result.received || 0;
+  const bankAmt = sorted.find(r => r.isBank)?.result.received || 0;
 
   const grid = document.getElementById('cardsGrid');
   grid.innerHTML = '';
@@ -867,11 +929,11 @@ function renderCards(results) {
     if (p.isBank) {
       savingHTML = '<div class="saving neg">Your current method</div>';
     } else {
-      const diff = r.gbpReceived - bankGBP;
+      const diff = r.received - bankAmt;
       if (diff > 0.01) {
-        savingHTML = `<div class="saving pos">+\u00A3${diff.toFixed(2)} vs bank</div>`;
+        savingHTML = `<div class="saving pos">+${s}${diff.toFixed(2)} vs bank</div>`;
       } else if (diff < -0.01) {
-        savingHTML = `<div class="saving neg">\u00A3${Math.abs(diff).toFixed(2)} less than bank</div>`;
+        savingHTML = `<div class="saving neg">${s}${Math.abs(diff).toFixed(2)} less than bank</div>`;
       } else {
         savingHTML = '<div class="saving neu">\u2248 same as bank</div>';
       }
@@ -895,17 +957,17 @@ function renderCards(results) {
         </div>
       </div>
       <div class="card-right">
-        <div class="gbp-amount"><span class="sym">\u00A3</span>${r.gbpReceived.toFixed(2)}</div>
+        <div class="gbp-amount"><span class="sym">${s}</span>${r.received.toFixed(2)}</div>
         ${savingHTML}
       </div>
       <button class="expand-btn" onclick="toggleDetails(this)">\u25B8 Show breakdown</button>
       <div class="fee-breakdown">
-        <div class="fee-row"><span class="fee-key">Mid-market rate:</span><span class="fee-val">1 QAR = \u00A3${midMarketRate.toFixed(6)}</span></div>
+        <div class="fee-row"><span class="fee-key">Mid-market rate:</span><span class="fee-val">1 QAR = ${s}${midMarketRate.toFixed(6)}</span></div>
         <div class="fee-row"><span class="fee-key">Rate markup:</span><span class="fee-val">${(r.rateMarkup*100).toFixed(2)}%</span></div>
-        <div class="fee-row"><span class="fee-key">Effective rate:</span><span class="fee-val">1 QAR = \u00A3${r.effectiveRate.toFixed(6)}</span></div>
-        <div class="fee-row"><span class="fee-key">Transfer fee:</span><span class="fee-val">${r.feeQAR > 0.01 ? `QAR ${r.feeQAR.toFixed(2)} (\u2248\u00A3${(r.feeQAR * midMarketRate).toFixed(2)})` : 'None'}</span></div>
+        <div class="fee-row"><span class="fee-key">Effective rate:</span><span class="fee-val">1 QAR = ${s}${r.effectiveRate.toFixed(6)}</span></div>
+        <div class="fee-row"><span class="fee-key">Transfer fee:</span><span class="fee-val">${r.feeQAR > 0.01 ? `QAR ${r.feeQAR.toFixed(2)} (\u2248${s}${(r.feeQAR * midMarketRate).toFixed(2)})` : 'None'}</span></div>
         <div class="fee-row"><span class="fee-key">Total cost:</span><span class="fee-val">${r.totalCostPct.toFixed(2)}% of transfer</span></div>
-        <div class="fee-row"><span class="fee-key">You receive:</span><span class="fee-val">\u00A3${r.gbpReceived.toFixed(2)}</span></div>
+        <div class="fee-row"><span class="fee-key">You receive:</span><span class="fee-val">${s}${r.received.toFixed(2)}</span></div>
         ${p.url ? `<div class="fee-row" style="grid-column:1/-1"><span class="fee-key">\u2192</span><span class="fee-val">${p.notes}</span></div>` : ''}
       </div>
     `;
@@ -914,34 +976,35 @@ function renderCards(results) {
 }
 
 function renderSummary(results, qarAmount) {
+  const s = sym();
   const nonBank = results.filter(r => !r.isBank);
   const bank = results.find(r => r.isBank);
-  const best = nonBank.reduce((a, b) => a.result.gbpReceived > b.result.gbpReceived ? a : b);
-  const bankGBP = bank ? bank.result.gbpReceived : 0;
-  const maxSaving = best.result.gbpReceived - bankGBP;
-  const midGBP = qarAmount * midMarketRate;
+  const best = nonBank.reduce((a, b) => a.result.received > b.result.received ? a : b);
+  const bankAmt = bank ? bank.result.received : 0;
+  const maxSaving = best.result.received - bankAmt;
+  const midVal = qarAmount * midMarketRate;
   const annualSaving = maxSaving * 12;
 
   const strip = document.getElementById('summaryStrip');
   strip.innerHTML = `
     <div class="stat-card">
       <div class="stat-label">Mid-market value</div>
-      <div class="stat-value">\u00A3${midGBP.toFixed(2)}</div>
+      <div class="stat-value">${s}${midVal.toFixed(2)}</div>
       <div class="stat-sub">QAR ${qarAmount.toLocaleString()} at interbank rate</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Best provider</div>
-      <div class="stat-value">\u00A3${best.result.gbpReceived.toFixed(2)}</div>
+      <div class="stat-value">${s}${best.result.received.toFixed(2)}</div>
       <div class="stat-sub">${best.name}</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Saving vs bank</div>
-      <div class="stat-value" style="color:var(--accent)">+\u00A3${maxSaving.toFixed(2)}</div>
+      <div class="stat-value" style="color:var(--accent)">+${s}${maxSaving.toFixed(2)}</div>
       <div class="stat-sub">per transfer</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Annual saving</div>
-      <div class="stat-value" style="color:var(--accent)">\u2248\u00A3${annualSaving.toFixed(0)}</div>
+      <div class="stat-value" style="color:var(--accent)">\u2248${s}${annualSaving.toFixed(0)}</div>
       <div class="stat-sub">if monthly (\u00D712)</div>
     </div>
   `;
@@ -977,7 +1040,7 @@ function runComparison() {
   renderSummary(results, amount);
 
   const dateStr = transferDate.toLocaleDateString('en-GB', {weekday:'short', day:'numeric', month:'short', year:'numeric'});
-  document.getElementById('resultsMeta').textContent = `QAR ${amount.toLocaleString()} \u00B7 ${dateStr}`;
+  document.getElementById('resultsMeta').textContent = `QAR ${amount.toLocaleString()} \u2192 ${targetCcy} \u00B7 ${dateStr}`;
 
   const resultsEl = document.getElementById('results');
   resultsEl.classList.add('visible');

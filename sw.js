@@ -1,4 +1,4 @@
-const CACHE_NAME = 'transfer-compare-v1';
+const CACHE_NAME = 'transfer-compare-v2';
 const ASSETS = [
   './transfer-comparator.html',
   './manifest.json',

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.ronaldniddrie.bankimport</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/ronaldniddrie/Library/Mobile Documents/com~apple~CloudDocs/Documents/Claude/Projects/Bank Transactions/automation/scripts/inbox_handler.sh</string>
+    </array>
+
+    <key>WatchPaths</key>
+    <array>
+        <string>/Users/ronaldniddrie/Library/Mobile Documents/com~apple~CloudDocs/Documents/Claude/Projects/Bank Transactions/CSV Inbox</string>
+    </array>
+
+    <key>ThrottleInterval</key>
+    <integer>5</integer>
+
+    <key>StandardOutPath</key>
+    <string>/Users/ronaldniddrie/Library/Mobile Documents/com~apple~CloudDocs/Documents/Claude/Projects/Bank Transactions/automation/launchd.out.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/Users/ronaldniddrie/Library/Mobile Documents/com~apple~CloudDocs/Documents/Claude/Projects/Bank Transactions/automation/launchd.err.log</string>
+</dict>
+</plist>
