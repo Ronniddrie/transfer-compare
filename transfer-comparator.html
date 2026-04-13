@@ -10,7 +10,7 @@
 <meta name="description" content="Compare QAR to GBP transfer rates across 15+ providers. Find the cheapest way to send money from Qatar to Scotland.">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-<link rel="manifest" href="manifest.json">
+<!-- no manifest/PWA - plain web app for instant updates -->
 <title>QAR Transfer Comparator</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -1062,9 +1062,14 @@ document.getElementById('transferDate').addEventListener('change', (e) => {
   document.getElementById('weekendNote').style.display = isWeekend ? 'block' : 'none';
 });
 
-/* ━━━ PWA Service Worker Registration ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+/* ━━━ Unregister any old service workers ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').catch(() => {});
+  navigator.serviceWorker.getRegistrations().then(regs => {
+    regs.forEach(r => r.unregister());
+  });
+  caches.keys().then(names => {
+    names.forEach(n => caches.delete(n));
+  });
 }
 </script>
 </body>
