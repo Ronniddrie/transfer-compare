@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Transfer Compare">
+<meta name="theme-color" content="#0b0f1a">
+<meta name="description" content="Compare QAR to GBP transfer rates across 15+ providers. Find the cheapest way to send money from Qatar to Scotland.">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="manifest" href="manifest.json">
+<title>QAR &rarr; GBP Transfer Comparator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0f1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: #1e2d45;
+    --accent: #00d4aa;
+    --accent2: #3b82f6;
+    --gold: #f59e0b;
+    --red: #ef4444;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --subtle: #334155;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 20% -10%, rgba(0,212,170,0.07) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 80% 110%, rgba(59,130,246,0.06) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 2rem 1.25rem 4rem;
+  }
+
+  header { text-align: center; margin-bottom: 2.5rem; }
+
+  .logo-line {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .currency-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0.35rem 0.9rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.85rem;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+  }
+
+  .currency-pill.qar { color: #8b5cf6; border-color: rgba(139,92,246,0.3); }
+  .currency-pill.gbp { color: var(--accent); border-color: rgba(0,212,170,0.3); }
+
+  .arrow-icon { color: var(--muted); font-size: 1.1rem; }
+
+  h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(1.6rem, 5vw, 2.4rem);
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    color: #fff;
+  }
+
+  h1 em { font-style: italic; color: var(--accent); }
+
+  .subtitle {
+    margin-top: 0.6rem;
+    color: var(--muted);
+    font-size: 0.9rem;
+    letter-spacing: 0.02em;
+  }
+
+  /* Input panel */
+  .input-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 1rem;
+    align-items: end;
+  }
+
+  @media (max-width: 600px) {
+    .input-panel { grid-template-columns: 1fr; }
+  }
+
+  label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.45rem;
+  }
+
+  input[type="number"], input[type="date"] {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 1rem;
+    font-weight: 500;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  input[type="number"]:focus, input[type="date"]:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0,212,170,0.1);
+  }
+
+  input[type="number"] { font-size: 1.15rem; }
+
+  input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.5); }
+
+  .compare-btn {
+    background: var(--accent);
+    color: #0b1f1a;
+    border: none;
+    border-radius: 10px;
+    padding: 0.8rem 1.6rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+    transition: opacity 0.15s, transform 0.1s;
+    white-space: nowrap;
+  }
+
+  .compare-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+  .compare-btn:active { transform: translateY(0); }
+  .compare-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* Rate bar */
+  .rate-bar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0.85rem 1.25rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  .rate-label { font-size: 0.75rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .rate-value { font-family: 'DM Mono', monospace; font-size: 1.05rem; font-weight: 500; color: var(--accent); }
+  .rate-source { font-size: 0.75rem; color: var(--muted); margin-left: auto; }
+
+  .rate-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 6px var(--accent);
+    flex-shrink: 0;
+  }
+
+  .rate-dot.loading {
+    background: var(--gold);
+    box-shadow: 0 0 6px var(--gold);
+    animation: pulse 1s infinite;
+  }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* Sort bar */
+  .sort-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .sort-label {
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-right: 0.25rem;
+  }
+
+  .sort-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 8px;
+    padding: 0.35rem 0.75rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .sort-btn:hover { border-color: var(--subtle); color: var(--text); }
+  .sort-btn.active { background: var(--accent); color: #0b1f1a; border-color: var(--accent); }
+
+  /* Results */
+  #results { display: none; }
+  #results.visible { display: block; }
+
+  .results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 1rem;
+  }
+
+  .results-title { font-family: 'DM Serif Display', serif; font-size: 1.1rem; color: #fff; }
+  .results-meta { font-size: 0.8rem; color: var(--muted); font-family: 'DM Mono', monospace; }
+
+  /* Cards */
+  .cards-grid { display: grid; gap: 0.75rem; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.1rem 1.25rem;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 0.75rem 1.25rem;
+    align-items: center;
+    position: relative;
+    transition: border-color 0.2s, transform 0.15s;
+    cursor: default;
+    animation: fadeSlide 0.3s ease both;
+  }
+
+  .card:hover { border-color: var(--subtle); transform: translateX(3px); }
+
+  .card.best {
+    border-color: rgba(0,212,170,0.4);
+    background: linear-gradient(135deg, rgba(0,212,170,0.04) 0%, var(--surface) 60%);
+  }
+
+  .card.best::before {
+    content: '\2605  BEST VALUE';
+    position: absolute;
+    top: -1px; right: 14px;
+    background: var(--accent);
+    color: #0b1f1a;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    padding: 2px 8px;
+    border-radius: 0 0 6px 6px;
+  }
+
+  .card.bank {
+    border-color: rgba(239,68,68,0.2);
+    opacity: 0.85;
+  }
+
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .provider-icon {
+    width: 42px; height: 42px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .provider-info { min-width: 0; }
+
+  .provider-name { font-weight: 500; font-size: 0.9rem; margin-bottom: 0.2rem; line-height: 1.3; }
+
+  .provider-meta {
+    font-size: 0.75rem;
+    color: var(--muted);
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .provider-meta span { display: flex; align-items: center; gap: 0.25rem; }
+
+  .badge {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: var(--surface2);
+    color: var(--muted);
+  }
+
+  .badge.fast { background: rgba(59,130,246,0.15); color: var(--accent2); }
+  .badge.instant { background: rgba(245,158,11,0.15); color: var(--gold); }
+
+  .card-right { text-align: right; }
+
+  .gbp-amount {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.35rem;
+    color: #fff;
+    white-space: nowrap;
+  }
+
+  .gbp-amount .sym {
+    font-size: 0.85rem;
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    margin-right: 1px;
+  }
+
+  .saving { font-size: 0.78rem; font-family: 'DM Mono', monospace; margin-top: 0.15rem; }
+  .saving.pos { color: var(--accent); }
+  .saving.neg { color: var(--red); }
+  .saving.neu { color: var(--muted); }
+
+  .fee-breakdown {
+    grid-column: 1 / -1;
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 0.6rem 0.8rem;
+    font-size: 0.75rem;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    display: none;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 0.3rem 1rem;
+    margin-top: -0.25rem;
+  }
+
+  .card.expanded .fee-breakdown { display: grid; }
+
+  .fee-row { display: flex; justify-content: space-between; gap: 0.5rem; }
+  .fee-key { color: var(--subtle); }
+  .fee-val { color: var(--text); font-weight: 500; }
+
+  .expand-btn {
+    grid-column: 1 / -1;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 0.72rem;
+    font-family: 'DM Mono', monospace;
+    cursor: pointer;
+    text-align: left;
+    padding: 0;
+    letter-spacing: 0.04em;
+    margin-top: -0.2rem;
+  }
+
+  .expand-btn:hover { color: var(--accent); }
+
+  /* Summary strip */
+  .summary-strip {
+    margin-top: 1.5rem;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+  }
+
+  @media (max-width: 600px) {
+    .summary-strip { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem;
+    text-align: center;
+  }
+
+  .stat-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 0.35rem;
+  }
+
+  .stat-value { font-family: 'DM Serif Display', serif; font-size: 1.3rem; color: var(--accent); }
+  .stat-sub { font-size: 0.72rem; color: var(--muted); margin-top: 0.15rem; }
+
+  /* Disclaimer */
+  .disclaimer {
+    margin-top: 2rem;
+    padding: 1rem 1.25rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 0.75rem;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .disclaimer strong { color: var(--text); }
+
+  .spinner {
+    display: inline-block;
+    width: 20px; height: 20px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin-right: 0.5rem;
+    vertical-align: middle;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .note-weekend {
+    text-align: center;
+    font-size: 0.78rem;
+    color: var(--gold);
+    background: rgba(245,158,11,0.07);
+    border: 1px solid rgba(245,158,11,0.2);
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    margin-bottom: 1rem;
+    display: none;
+  }
+
+  /* Provider icon colours */
+  .icon-wise      { background: rgba(0,184,212,0.12); color: #00b8d4; }
+  .icon-revolut   { background: rgba(99,102,241,0.12); color: #818cf8; }
+  .icon-ofx       { background: rgba(16,185,129,0.12); color: #10b981; }
+  .icon-xe        { background: rgba(245,158,11,0.12); color: var(--gold); }
+  .icon-wu        { background: rgba(239,68,68,0.12); color: #fb7185; }
+  .icon-remitly   { background: rgba(236,72,153,0.12); color: #f472b6; }
+  .icon-currfair  { background: rgba(139,92,246,0.12); color: #a78bfa; }
+  .icon-bank      { background: rgba(100,116,139,0.12); color: #94a3b8; }
+  .icon-torfx     { background: rgba(220,100,50,0.12); color: #e87040; }
+  .icon-moneycorp { background: rgba(56,189,180,0.12); color: #38bdb4; }
+  .icon-instarem  { background: rgba(168,85,247,0.12); color: #a855f7; }
+  .icon-worldremit{ background: rgba(34,197,94,0.12); color: #22c55e; }
+  .icon-moneygram { background: rgba(250,204,21,0.12); color: #facc15; }
+  .icon-skrill    { background: rgba(168,85,247,0.12); color: #c084fc; }
+  .icon-xoom      { background: rgba(59,130,246,0.12); color: #60a5fa; }
+
+  .card:nth-child(1) { animation-delay: 0.03s; }
+  .card:nth-child(2) { animation-delay: 0.06s; }
+  .card:nth-child(3) { animation-delay: 0.09s; }
+  .card:nth-child(4) { animation-delay: 0.12s; }
+  .card:nth-child(5) { animation-delay: 0.15s; }
+  .card:nth-child(6) { animation-delay: 0.18s; }
+  .card:nth-child(7) { animation-delay: 0.21s; }
+  .card:nth-child(8) { animation-delay: 0.24s; }
+  .card:nth-child(9) { animation-delay: 0.27s; }
+  .card:nth-child(10) { animation-delay: 0.30s; }
+  .card:nth-child(11) { animation-delay: 0.33s; }
+  .card:nth-child(12) { animation-delay: 0.36s; }
+  .card:nth-child(13) { animation-delay: 0.39s; }
+  .card:nth-child(14) { animation-delay: 0.42s; }
+  .card:nth-child(15) { animation-delay: 0.45s; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="logo-line">
+      <span class="currency-pill qar">&#x1F1F6;&#x1F1E6; QAR</span>
+      <span class="arrow-icon">&rarr;</span>
+      <span class="currency-pill gbp">&#x1F1EC;&#x1F1E7; GBP</span>
+    </div>
+    <h1>Transfer <em>Comparator</em></h1>
+    <p class="subtitle">Commercial Bank Qatar &rarr; Bank of Scotland &middot; Find the best route</p>
+  </header>
+
+  <div class="input-panel">
+    <div>
+      <label>Amount (QAR)</label>
+      <input type="number" id="amount" value="10000" min="100" step="100" placeholder="e.g. 10000">
+    </div>
+    <div>
+      <label>Transfer Date</label>
+      <input type="date" id="transferDate">
+    </div>
+    <div>
+      <button class="compare-btn" id="compareBtn" onclick="runComparison()">Compare Now</button>
+    </div>
+  </div>
+
+  <div class="rate-bar">
+    <span class="rate-dot loading" id="rateDot"></span>
+    <span class="rate-label">Mid-Market Rate</span>
+    <span class="rate-value" id="rateDisplay">Fetching live rate&hellip;</span>
+    <span class="rate-source" id="rateSource"></span>
+  </div>
+
+  <div class="note-weekend" id="weekendNote">
+    &#9888;&#65039; Weekend transfer: some providers add 0.5&ndash;1% surcharge on Saturdays &amp; Sundays.
+  </div>
+
+  <div id="results">
+    <div class="results-header">
+      <span class="results-title">Provider Comparison</span>
+      <span class="results-meta" id="resultsMeta"></span>
+    </div>
+    <div class="sort-bar">
+      <span class="sort-label">Sort by:</span>
+      <button class="sort-btn active" id="sort-gbp" onclick="sortBy('gbp')">Most GBP</button>
+      <button class="sort-btn" id="sort-rate" onclick="sortBy('rate')">Best Rate</button>
+      <button class="sort-btn" id="sort-fee" onclick="sortBy('fee')">Lowest Fee</button>
+      <button class="sort-btn" id="sort-speed" onclick="sortBy('speed')">Fastest</button>
+    </div>
+    <div class="cards-grid" id="cardsGrid"></div>
+    <div class="summary-strip" id="summaryStrip"></div>
+  </div>
+
+  <div class="disclaimer">
+    <strong>Important:</strong> All figures are estimates based on published fee structures and a live mid-market rate. Provider rates change daily and vary by account type, transfer method, and verification status.
+    <strong>Always confirm the exact rate in-app before sending.</strong>
+    QAR is pegged to USD at ~3.64 QAR/USD, which limits volatility but spreads still vary significantly by provider.
+    Fee models are approximations of each provider's typical cost structure as of April 2026.
+  </div>
+
+</div>
+
+<script>
+/* ━━━ State ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+let midMarketRate = null;   // GBP per QAR (e.g. ~0.2063)
+let isWeekend = false;
+let currentSort = 'gbp';
+let lastResults = [];
+let rateSourceName = '';
+
+/* ━━━ Provider Definitions ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+// Fee models return { feeQAR, rateMarkup (decimal), note }
+// rateMarkup is the fraction deducted from mid-market rate
+// feeQAR is the flat/percentage fee expressed in QAR
+const QAR_PER_USD = 3.64;
+
+const PROVIDERS = [
+  {
+    id: 'wise', name: 'Wise', icon: 'W', iconClass: 'icon-wise',
+    feeModel: (qar) => {
+      const pctFee = 0.0045;
+      const feeQAR = Math.max(2.5 * QAR_PER_USD, qar * pctFee);
+      return { feeQAR, rateMarkup: 0, note: '~0.45% fee, mid-market rate' };
+    },
+    speed: 'Same day', speedClass: 'fast', speedOrder: 2,
+    url: 'https://wise.com',
+    notes: 'Uses the real mid-market rate with a transparent, low fee. Best for regular salary transfers.'
+  },
+  {
+    id: 'revolut', name: 'Revolut (Standard)', icon: 'R', iconClass: 'icon-revolut',
+    feeModel: (qar) => {
+      const surcharge = isWeekend ? 0.01 : 0;
+      return { feeQAR: 0, rateMarkup: 0.005 + surcharge, note: '0.5% markup' + (isWeekend ? ' +1% weekend' : '') };
+    },
+    speed: '< 1 hour', speedClass: 'instant', speedOrder: 1,
+    url: 'https://revolut.com',
+    notes: 'Standard plan. Near mid-market. Weekend surcharge applies.'
+  },
+  {
+    id: 'revolut_premium', name: 'Revolut (Premium/Metal)', icon: 'R+', iconClass: 'icon-revolut',
+    feeModel: (qar) => {
+      return { feeQAR: 0, rateMarkup: 0.003, note: '0.3% markup, no weekend fee' };
+    },
+    speed: '< 1 hour', speedClass: 'instant', speedOrder: 1,
+    url: 'https://revolut.com',
+    notes: 'Premium (£9.99/mo) or Metal plan. No weekend surcharge. Fee-free up to limits.'
+  },
+  {
+    id: 'currencyfair', name: 'CurrencyFair', icon: 'CF', iconClass: 'icon-currfair',
+    feeModel: (qar) => {
+      const flatFeeGBP = 2.50;
+      return { feeQAR: flatFeeGBP / 0.2063, rateMarkup: 0.0045, note: '~£2.50 fee + 0.45% spread' };
+    },
+    speed: '1-3 days', speedClass: '', speedOrder: 3,
+    url: 'https://currencyfair.com',
+    notes: 'Peer-to-peer marketplace. Can set your own rate for even tighter spreads. FCA regulated.'
+  },
+  {
+    id: 'ofx', name: 'OFX', icon: 'OFX', iconClass: 'icon-ofx',
+    feeModel: (qar) => {
+      return { feeQAR: 0, rateMarkup: 0.005, note: 'No fee, ~0.5% margin' };
+    },
+    speed: '1-2 days', speedClass: '', speedOrder: 2,
+    url: 'https://ofx.com',
+    notes: 'No transfer fee. 24/5 phone support. Better rates on amounts over £5,000 — call to negotiate.'
+  },
+  {
+    id: 'instarem', name: 'InstaReM (Nium)', icon: 'iR', iconClass: 'icon-instarem',
+    feeModel: (qar) => {
+      const pctFee = 0.005;
+      return { feeQAR: qar * pctFee, rateMarkup: 0.005, note: '~0.5% fee + 0.5% markup' };
+    },
+    speed: '1-2 days', speedClass: 'fast', speedOrder: 2,
+    url: 'https://instarem.com',
+    notes: 'Part of Nium global payments network. Competitive rates for Asia-to-UK corridor.'
+  },
+  {
+    id: 'torfx', name: 'TorFX', icon: 'TF', iconClass: 'icon-torfx',
+    feeModel: (qar) => {
+      return { feeQAR: 0, rateMarkup: 0.007, note: 'No fee, ~0.7% margin' };
+    },
+    speed: '1-2 days', speedClass: '', speedOrder: 2,
+    url: 'https://torfx.com',
+    notes: 'Personal account manager. Good for large or regular transfers. FCA regulated.'
+  },
+  {
+    id: 'xe', name: 'XE Money Transfer', icon: 'XE', iconClass: 'icon-xe',
+    feeModel: (qar) => {
+      const markup = qar > 18000 ? 0.005 : 0.008;
+      return { feeQAR: 0, rateMarkup: markup, note: `No fee, ~${(markup*100).toFixed(1)}% margin` };
+    },
+    speed: '1-3 days', speedClass: '', speedOrder: 3,
+    url: 'https://xe.com',
+    notes: 'Part of Euronet Worldwide. Rate alerts available. Better rates on larger amounts.'
+  },
+  {
+    id: 'moneycorp', name: 'Moneycorp', icon: 'MC', iconClass: 'icon-moneycorp',
+    feeModel: (qar) => {
+      return { feeQAR: 0, rateMarkup: 0.008, note: 'No fee, ~0.8% spread (negotiable)' };
+    },
+    speed: '1-3 days', speedClass: '', speedOrder: 3,
+    url: 'https://moneycorp.com',
+    notes: 'Long-established specialist. Rates are negotiable especially for large amounts.'
+  },
+  {
+    id: 'remitly', name: 'Remitly', icon: 'Re', iconClass: 'icon-remitly',
+    feeModel: (qar) => {
+      const flatFeeGBP = 2.99;
+      return { feeQAR: flatFeeGBP / 0.2063, rateMarkup: 0.008, note: '~£2.99 fee + 0.8% markup' };
+    },
+    speed: '1-5 days', speedClass: '', speedOrder: 3,
+    url: 'https://remitly.com',
+    notes: 'Mobile-first. Economy option shown. Promo rates for new users.'
+  },
+  {
+    id: 'worldremit', name: 'WorldRemit', icon: 'WR', iconClass: 'icon-worldremit',
+    feeModel: (qar) => {
+      const flatFeeGBP = 3.99;
+      return { feeQAR: flatFeeGBP / 0.2063, rateMarkup: 0.012, note: '~£3.99 fee + 1.2% markup' };
+    },
+    speed: 'Minutes-1 day', speedClass: 'fast', speedOrder: 1,
+    url: 'https://worldremit.com',
+    notes: 'Better for smaller amounts. Wide destination coverage.'
+  },
+  {
+    id: 'westernunion', name: 'Western Union', icon: 'WU', iconClass: 'icon-wu',
+    feeModel: (qar) => {
+      const flatFeeGBP = 5;
+      return { feeQAR: flatFeeGBP / 0.2063, rateMarkup: 0.012, note: '~£5 fee + 1.2% markup' };
+    },
+    speed: 'Minutes', speedClass: 'instant', speedOrder: 1,
+    url: 'https://westernunion.com',
+    notes: 'Fast but expensive. Good for cash pickup. Widely available in Qatar.'
+  },
+  {
+    id: 'moneygram', name: 'MoneyGram', icon: 'MG', iconClass: 'icon-moneygram',
+    feeModel: (qar) => {
+      const flatFeeGBP = 4.99;
+      return { feeQAR: flatFeeGBP / 0.2063, rateMarkup: 0.015, note: '~£4.99 fee + 1.5% spread' };
+    },
+    speed: 'Minutes-2 days', speedClass: 'fast', speedOrder: 2,
+    url: 'https://moneygram.com',
+    notes: 'Wide agent network. Comparable to Western Union.'
+  },
+  {
+    id: 'skrill', name: 'Skrill', icon: 'Sk', iconClass: 'icon-skrill',
+    feeModel: (qar) => {
+      const pctFee = 0.0145;
+      return { feeQAR: qar * pctFee, rateMarkup: 0.025, note: '1.45% fee + 2.5% spread' };
+    },
+    speed: '1-3 days', speedClass: '', speedOrder: 3,
+    url: 'https://skrill.com',
+    notes: 'Higher cost. Mainly useful if you already use the Skrill wallet.'
+  },
+  {
+    id: 'xoom', name: 'PayPal / Xoom', icon: 'PP', iconClass: 'icon-xoom',
+    feeModel: (qar) => {
+      const flatFeeUSD = 4.99;
+      return { feeQAR: flatFeeUSD * QAR_PER_USD, rateMarkup: 0.035, note: '~$5 fee + 3.5% spread' };
+    },
+    speed: '1-3 days', speedClass: '', speedOrder: 3,
+    url: 'https://xoom.com',
+    notes: 'Avoid if possible — high markup on top of fees.'
+  },
+  {
+    id: 'bank', name: 'CBQ Direct SWIFT Transfer', icon: '\uD83C\uDFE6', iconClass: 'icon-bank',
+    feeModel: (qar) => {
+      const flatFeeQAR = 55; // ~QAR 55 (approx £11-12) SWIFT fee
+      return { feeQAR: flatFeeQAR, rateMarkup: 0.035, note: '~QAR 55 SWIFT fee + 3.5% spread' };
+    },
+    speed: '3-5 days', speedClass: '', speedOrder: 4,
+    url: null,
+    notes: 'Current method. Commercial Bank of Qatar SWIFT wire to Bank of Scotland.',
+    isBank: true
+  }
+];
+
+/* ━━━ Init ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+(function init() {
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth()+1).padStart(2,'0');
+  const dd = String(today.getDate()).padStart(2,'0');
+  document.getElementById('transferDate').value = `${yyyy}-${mm}-${dd}`;
+  fetchLiveRate();
+})();
+
+/* ━━━ Fetch Mid-Market Rate ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+async function fetchLiveRate() {
+  const dot = document.getElementById('rateDot');
+  const display = document.getElementById('rateDisplay');
+  const source = document.getElementById('rateSource');
+  dot.className = 'rate-dot loading';
+  display.textContent = 'Fetching live rate\u2026';
+
+  const FALLBACK_RATE = 0.2063;
+  const apis = [
+    {
+      url: 'https://open.er-api.com/v6/latest/QAR',
+      parse: d => d.rates && d.rates.GBP ? d.rates.GBP : null,
+      name: 'open.er-api.com'
+    },
+    {
+      url: 'https://api.exchangerate-api.com/v4/latest/QAR',
+      parse: d => d.rates && d.rates.GBP ? d.rates.GBP : null,
+      name: 'exchangerate-api.com'
+    },
+    {
+      url: 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/qar.json',
+      parse: d => d.qar && d.qar.gbp ? d.qar.gbp : null,
+      name: 'fawazahmed0/currency-api'
+    },
+    {
+      url: 'https://api.frankfurter.app/latest?from=QAR&to=GBP',
+      parse: d => d.rates && d.rates.GBP ? d.rates.GBP : null,
+      name: 'frankfurter.app'
+    }
+  ];
+
+  for (const api of apis) {
+    try {
+      const resp = await fetch(api.url, { signal: AbortSignal.timeout(6000) });
+      if (!resp.ok) continue;
+      const data = await resp.json();
+      const rate = api.parse(data);
+      if (rate && rate > 0.1 && rate < 0.4) {
+        midMarketRate = rate;
+        rateSourceName = api.name;
+        dot.className = 'rate-dot';
+        display.textContent = `1 QAR = \u00A3${midMarketRate.toFixed(6)} GBP`;
+        source.textContent = `Source: ${api.name}`;
+        return;
+      }
+    } catch(e) { /* try next */ }
+  }
+
+  // All failed — use fallback
+  midMarketRate = FALLBACK_RATE;
+  rateSourceName = 'cached estimate';
+  dot.className = 'rate-dot';
+  dot.style.background = 'var(--gold)';
+  dot.style.boxShadow = '0 0 6px var(--gold)';
+  display.textContent = `1 QAR = \u00A3${midMarketRate.toFixed(6)} GBP (cached)`;
+  source.textContent = '\u26A0 Live fetch failed \u2014 using recent cached rate. Verify before sending.';
+}
+
+/* ━━━ Calculate ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+function calcResult(provider, qarAmount, midRate) {
+  const { feeQAR, rateMarkup, note } = provider.feeModel(qarAmount);
+  const effectiveRate = midRate * (1 - rateMarkup);
+  const gbpReceived = (qarAmount - feeQAR) * effectiveRate;
+  const totalCostPct = ((1 - gbpReceived / (qarAmount * midRate)) * 100);
+  return { gbpReceived, effectiveRate, feeQAR, rateMarkup, note, totalCostPct };
+}
+
+/* ━━━ Sort ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+function sortResults(results, key) {
+  const sorted = [...results];
+  sorted.sort((a, b) => {
+    // Bank always last
+    if (a.isBank && !b.isBank) return 1;
+    if (!a.isBank && b.isBank) return -1;
+    switch (key) {
+      case 'gbp':   return b.result.gbpReceived - a.result.gbpReceived;
+      case 'rate':  return b.result.effectiveRate - a.result.effectiveRate;
+      case 'fee':   return a.result.feeQAR - b.result.feeQAR;
+      case 'speed': return (a.speedOrder||3) - (b.speedOrder||3);
+      default:      return b.result.gbpReceived - a.result.gbpReceived;
+    }
+  });
+  return sorted;
+}
+
+function sortBy(key) {
+  currentSort = key;
+  ['sort-gbp','sort-rate','sort-fee','sort-speed'].forEach(id => {
+    document.getElementById(id).classList.remove('active');
+  });
+  document.getElementById('sort-' + key).classList.add('active');
+  if (lastResults.length > 0) renderCards(lastResults);
+}
+
+/* ━━━ Render ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+function renderCards(results) {
+  const sorted = sortResults(results, currentSort);
+  const bestGBP = sorted.filter(r => !r.isBank)[0]?.result.gbpReceived || 0;
+  const bankGBP = sorted.find(r => r.isBank)?.result.gbpReceived || 0;
+
+  const grid = document.getElementById('cardsGrid');
+  grid.innerHTML = '';
+
+  sorted.forEach((p, i) => {
+    const r = p.result;
+    const isBest = !p.isBank && i === 0 && currentSort === 'gbp';
+
+    let savingHTML = '';
+    if (p.isBank) {
+      savingHTML = '<div class="saving neg">Your current method</div>';
+    } else {
+      const diff = r.gbpReceived - bankGBP;
+      if (diff > 0.01) {
+        savingHTML = `<div class="saving pos">+\u00A3${diff.toFixed(2)} vs bank</div>`;
+      } else if (diff < -0.01) {
+        savingHTML = `<div class="saving neg">\u00A3${Math.abs(diff).toFixed(2)} less than bank</div>`;
+      } else {
+        savingHTML = '<div class="saving neu">\u2248 same as bank</div>';
+      }
+    }
+
+    const speedBadge = p.speedClass
+      ? `<span class="badge ${p.speedClass}">${p.speed}</span>`
+      : `<span class="badge">${p.speed}</span>`;
+
+    const card = document.createElement('div');
+    card.className = `card${isBest ? ' best' : ''}${p.isBank ? ' bank' : ''}`;
+    card.style.animationDelay = `${i * 0.03}s`;
+
+    card.innerHTML = `
+      <div class="provider-icon ${p.iconClass}">${p.icon}</div>
+      <div class="provider-info">
+        <div class="provider-name">${p.name}</div>
+        <div class="provider-meta">
+          <span>${speedBadge}</span>
+          <span title="${r.note}">${r.note}</span>
+        </div>
+      </div>
+      <div class="card-right">
+        <div class="gbp-amount"><span class="sym">\u00A3</span>${r.gbpReceived.toFixed(2)}</div>
+        ${savingHTML}
+      </div>
+      <button class="expand-btn" onclick="toggleDetails(this)">\u25B8 Show breakdown</button>
+      <div class="fee-breakdown">
+        <div class="fee-row"><span class="fee-key">Mid-market rate:</span><span class="fee-val">1 QAR = \u00A3${midMarketRate.toFixed(6)}</span></div>
+        <div class="fee-row"><span class="fee-key">Rate markup:</span><span class="fee-val">${(r.rateMarkup*100).toFixed(2)}%</span></div>
+        <div class="fee-row"><span class="fee-key">Effective rate:</span><span class="fee-val">1 QAR = \u00A3${r.effectiveRate.toFixed(6)}</span></div>
+        <div class="fee-row"><span class="fee-key">Transfer fee:</span><span class="fee-val">${r.feeQAR > 0.01 ? `QAR ${r.feeQAR.toFixed(2)} (\u2248\u00A3${(r.feeQAR * midMarketRate).toFixed(2)})` : 'None'}</span></div>
+        <div class="fee-row"><span class="fee-key">Total cost:</span><span class="fee-val">${r.totalCostPct.toFixed(2)}% of transfer</span></div>
+        <div class="fee-row"><span class="fee-key">You receive:</span><span class="fee-val">\u00A3${r.gbpReceived.toFixed(2)}</span></div>
+        ${p.url ? `<div class="fee-row" style="grid-column:1/-1"><span class="fee-key">\u2192</span><span class="fee-val">${p.notes}</span></div>` : ''}
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function renderSummary(results, qarAmount) {
+  const nonBank = results.filter(r => !r.isBank);
+  const bank = results.find(r => r.isBank);
+  const best = nonBank.reduce((a, b) => a.result.gbpReceived > b.result.gbpReceived ? a : b);
+  const bankGBP = bank ? bank.result.gbpReceived : 0;
+  const maxSaving = best.result.gbpReceived - bankGBP;
+  const midGBP = qarAmount * midMarketRate;
+  const annualSaving = maxSaving * 12;
+
+  const strip = document.getElementById('summaryStrip');
+  strip.innerHTML = `
+    <div class="stat-card">
+      <div class="stat-label">Mid-market value</div>
+      <div class="stat-value">\u00A3${midGBP.toFixed(2)}</div>
+      <div class="stat-sub">QAR ${qarAmount.toLocaleString()} at interbank rate</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Best provider</div>
+      <div class="stat-value">\u00A3${best.result.gbpReceived.toFixed(2)}</div>
+      <div class="stat-sub">${best.name}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Saving vs bank</div>
+      <div class="stat-value" style="color:var(--accent)">+\u00A3${maxSaving.toFixed(2)}</div>
+      <div class="stat-sub">per transfer</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Annual saving</div>
+      <div class="stat-value" style="color:var(--accent)">\u2248\u00A3${annualSaving.toFixed(0)}</div>
+      <div class="stat-sub">if monthly (\u00D712)</div>
+    </div>
+  `;
+}
+
+/* ━━━ Main Compare ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+function runComparison() {
+  if (!midMarketRate) {
+    alert('Please wait \u2014 still fetching the live rate.');
+    return;
+  }
+
+  const amount = parseFloat(document.getElementById('amount').value);
+  if (!amount || amount < 10) {
+    alert('Please enter a valid amount (minimum 10 QAR).');
+    return;
+  }
+
+  const dateVal = document.getElementById('transferDate').value;
+  const transferDate = new Date(dateVal);
+  const dayOfWeek = transferDate.getDay();
+  isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+  document.getElementById('weekendNote').style.display = isWeekend ? 'block' : 'none';
+
+  const results = PROVIDERS.map(p => ({
+    ...p,
+    result: calcResult(p, amount, midMarketRate)
+  }));
+
+  lastResults = results;
+
+  renderCards(results);
+  renderSummary(results, amount);
+
+  const dateStr = transferDate.toLocaleDateString('en-GB', {weekday:'short', day:'numeric', month:'short', year:'numeric'});
+  document.getElementById('resultsMeta').textContent = `QAR ${amount.toLocaleString()} \u00B7 ${dateStr}`;
+
+  const resultsEl = document.getElementById('results');
+  resultsEl.classList.add('visible');
+  resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function toggleDetails(btn) {
+  const card = btn.closest('.card');
+  card.classList.toggle('expanded');
+  btn.textContent = card.classList.contains('expanded')
+    ? '\u25BE Hide breakdown'
+    : '\u25B8 Show breakdown';
+}
+
+/* Weekend check on date change */
+document.getElementById('transferDate').addEventListener('change', (e) => {
+  const d = new Date(e.target.value);
+  isWeekend = (d.getDay() === 0 || d.getDay() === 6);
+  document.getElementById('weekendNote').style.display = isWeekend ? 'block' : 'none';
+});
+
+/* ━━━ PWA Service Worker Registration ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
